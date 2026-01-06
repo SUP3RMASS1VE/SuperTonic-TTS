@@ -12,7 +12,7 @@
       "method": "shell.run",
       "params": {
         "path": "app",
-        "message": "hf download Supertone/supertonic --local-dir ./assets"
+        "message": "hf download Supertone/supertonic-2 --local-dir ./assets"
       }
     },
     {
