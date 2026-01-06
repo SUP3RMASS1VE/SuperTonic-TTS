@@ -10,6 +10,15 @@ VOICE_STYLES_DIR = "assets/voice_styles"
 DEFAULT_SPEED = 1.05
 DEFAULT_STEPS = 5
 
+# Supported languages in Supertonic 2
+SUPPORTED_LANGUAGES = [
+    ("English", "en"),
+    ("Korean", "ko"),
+    ("Spanish", "es"),
+    ("Portuguese", "pt"),
+    ("French", "fr"),
+]
+
 # Global model instance
 tts_model = None
 
@@ -32,7 +41,7 @@ def load_model():
         print("Model loaded successfully.")
     return tts_model
 
-def generate_audio(text, voice_style_name, speed, total_steps):
+def generate_audio(text, voice_style_name, language, speed, total_steps):
     try:
         if not text.strip():
             return None, "Please enter some text."
@@ -47,17 +56,12 @@ def generate_audio(text, voice_style_name, speed, total_steps):
             return None, f"Voice style file not found: {voice_style_path}"
 
         # Load the selected voice style
-        # load_voice_style expects a list of paths
         style = load_voice_style([voice_style_path])
 
-        # Generate speech
-        # The model call returns (wav, duration)
-        # wav shape is typically [1, T] or similar
-        wav, duration = model(text, style, total_steps, speed)
+        # Generate speech with language parameter (Supertonic 2 API)
+        wav, duration = model(text, language, style, total_steps, speed)
         
         # Prepare audio for Gradio
-        # Gradio expects (sample_rate, numpy_array)
-        # Ensure wav is 1D array
         audio_data = wav.flatten()
         sample_rate = model.sample_rate
         
@@ -69,9 +73,9 @@ def generate_audio(text, voice_style_name, speed, total_steps):
         return None, f"Error: {str(e)}"
 
 # Create the Gradio Interface
-with gr.Blocks(title="Supertonic TTS WebUI") as demo:
-    gr.Markdown("# Supertonic TTS WebUI")
-    gr.Markdown("Generate speech from text using ONNX Runtime.")
+with gr.Blocks(title="Supertonic 2 TTS WebUI") as demo:
+    gr.Markdown("# Supertonic 2 TTS WebUI")
+    gr.Markdown("Generate multilingual speech from text using ONNX Runtime. Supports English, Korean, Spanish, Portuguese, and French.")
 
     with gr.Row():
         with gr.Column():
@@ -91,6 +95,14 @@ with gr.Blocks(title="Supertonic TTS WebUI") as demo:
                 value=default_style,
                 label="Voice Style",
                 info="Select a voice style JSON file from assets/voice_styles"
+            )
+            
+            # Language selection for Supertonic 2
+            language_dropdown = gr.Dropdown(
+                choices=[lang[1] for lang in SUPPORTED_LANGUAGES],
+                value="en",
+                label="Language",
+                info="Select the language of your input text"
             )
             
             with gr.Row():
@@ -120,7 +132,7 @@ with gr.Blocks(title="Supertonic TTS WebUI") as demo:
     # Event handlers
     generate_btn.click(
         fn=generate_audio,
-        inputs=[text_input, voice_style_dropdown, speed_slider, steps_slider],
+        inputs=[text_input, voice_style_dropdown, language_dropdown, speed_slider, steps_slider],
         outputs=[audio_output, status_output]
     )
 
